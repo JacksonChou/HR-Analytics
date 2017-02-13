@@ -349,7 +349,7 @@ datatable(orderpredattrition)
 <hr/>
 <br/>
 
-<center> Last updated on the 11/2015 </center>
+
 
 
 
