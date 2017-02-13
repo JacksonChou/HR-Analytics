@@ -1,5 +1,6 @@
 ---
 title: "<center> HR analytics </center>"
+owner: Jackson Chou
 output:
   html_document:
     code_folding: hide
@@ -45,13 +46,19 @@ This is the database from the HR department: (Note that it doesn't take into acc
 
 
 ```{r, echo=F, message=F, warning=F}
-library(dplyr)
-library(tidyr)
-library(ggplot2)
+library(tidyverse)
+library(readr)
 library(ggvis)
 library(corrplot)
 library(DT)
-hr = read.table('../input/HR.csv', col_names= T,sep=';')
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(e1071)
+library(rminer)
+library(klaR)
+
+hr <- read_csv('HR_comma_sep.csv', col_names= T)
 head(hr)
 ```
 
@@ -89,7 +96,7 @@ summary(hr)
 This graph present the correlations between each variables. The size of the bubbles reveal the significance of the correlation, while the colour present the direction (either positive or negative).
 
 ```{r, message=F, warning=F, fig.width=10}
-HR_correlation <- hr %>% select(satisfaction_level:promotion_last_5years)
+HR_correlation <- hr %>% dplyr::select(satisfaction_level:promotion_last_5years)
 M <- cor(HR_correlation)
 corrplot(M, method="circle")
 ```
@@ -127,8 +134,8 @@ hist(hr_hist$average_montly_hours,col="#3090C7", main = "Average montly hours")
 We can see why we don't want to retain everybody. Some people don't work well as we can see from their evaluation, but clearly there are also many good workers that leave.
 
 ```{r, message=F, warning=F, fig.width=10}
-par(mfrow=c(1,2))
-hist(hr_hist$Work_accident,col="#3090C7", main = "Work accident")
+hr_hist$salary <- as.factor(hr_hist$salary)
+hist(hr_hist$Work_accident, col="#3090C7", main = "Work accident")
 plot(hr_hist$salary,col="#3090C7", main = "Salary")
 ```
 
@@ -160,7 +167,7 @@ Let's re-use the data table created above that contain only the most valuable em
 
 ```{r, message=F, warning=F, fig.width=10}
 hr_good_leaving_people2 <- hr %>% filter(last_evaluation >= 0.70 | time_spend_company >= 4 | number_project > 5)
-hr_good_people_select <- hr_good_leaving_people2 %>% select(satisfaction_level, number_project: promotion_last_5years)
+hr_good_people_select <- hr_good_leaving_people2 %>% dplyr::select(satisfaction_level, number_project: promotion_last_5years)
 M <- cor(hr_good_people_select)
 corrplot(M, method="circle")
 ```
@@ -223,8 +230,6 @@ head(train_control)
 ### Tree learning
 
 ```{r, warning=F, fig.width=10}
-library("rpart")
-library("rpart.plot")
 # train the model 
 rpartmodel<- train(left~., data=hr_model, trControl=train_control, method="rpart")
 # make predictions
